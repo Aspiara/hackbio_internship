@@ -1,0 +1,13 @@
+# Create a named list to organize the information
+personal_info <- list(
+  Name = c("Aspiara", "Samuel", "Ogochukwu", "Tejaswi", "Stephen"),
+  SlackUsername = c("aspiara", "Samuel", "Ogochukwe Iberi", "Tejaswi", "Stephen"),
+  Email = c("aspiararoosmin@gmail.com", "adewumisamuel34@gmail.com", "iberiogochukwu@gmail.com", "tejaswivellugapally@gmail.com", "steveoye81@gmail.com"),
+  Hobby = c("Painting", "Video Games", "Reading", "Innovation", "Music"),
+  Countries = c("USA", "Nigeria", "Nigeria", "India", "Nigeria"),
+  Discipline = c("Digital Marketing", "Optometry", "Biochemistry", "Bioinformatics", "Veterinary Science"),
+  PreferredProgrammingLanguage = c("R", "Python", "Python", "R", "Python")
+)
+
+# Print the organized information
+print(personal_info)
