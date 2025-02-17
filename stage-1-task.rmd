@@ -1,0 +1,88 @@
+#STAGE 1 TASK 
+ #1.Write a function for translating DNA to protein
+# Define the genetic code as a named vector
+genetic_code <- c(
+  "ATA" = "I", "ATC" = "I", "ATT" = "I", "ATG" = "M",
+  "ACA" = "T", "ACC" = "T", "ACG" = "T", "ACT" = "T",
+  "AAC" = "N", "AAT" = "N", "AAA" = "K", "AAG" = "K",
+  "AGC" = "S", "AGT" = "S", "AGA" = "R", "AGG" = "R",
+  "CTA" = "L", "CTC" = "L", "CTG" = "L", "CTT" = "L",
+  "CCA" = "P", "CCC" = "P", "CCG" = "P", "CCT" = "P",
+  "CAC" = "H", "CAT" = "H", "CAA" = "Q", "CAG" = "Q",
+  "CGA" = "R", "CGC" = "R", "CGG" = "R", "CGT" = "R",
+  "GTA" = "V", "GTC" = "V", "GTG" = "V", "GTT" = "V",
+  "GCA" = "A", "GCC" = "A", "GCG" = "A", "GCT" = "A",
+  "GAC" = "D", "GAT" = "D", "GAA" = "E", "GAG" = "E",
+  "GGA" = "G", "GGC" = "G", "GGG" = "G", "GGT" = "G",
+  "TCA" = "S", "TCC" = "S", "TCG" = "S", "TCT" = "S",
+  "TTC" = "F", "TTT" = "F", "TTA" = "L", "TTG" = "L",
+  "TAC" = "Y", "TAT" = "Y", "TAA" = "*", "TAG" = "*",
+  "TGC" = "C", "TGT" = "C", "TGA" = "*", "TGG" = "W"
+)
+
+# Function to translate DNA to protein
+translate_dna <- function(dna) {
+  # Split the DNA sequence into codons (groups of 3 bases)
+  codons <- substring(dna, seq(1, nchar(dna), by = 3), seq(3, nchar(dna), by = 3))
+
+  
+  # Translate each codon to an amino acid using the genetic code
+  protein <- sapply(codons, function(codon) genetic_code[[codon]])
+  
+  # Combine the amino acids into a protein sequence
+  return(paste(protein, collapse = ""))
+}
+
+# Example usage
+result <- translate_dna("ATGGGGAAGGTGAAGGTCGGAGTCAACGGATTTGGTCGTATTGGGCGCCTGGTCACCAGGGCTGCTTTTAACTCTGGTGGGGGTCACTCTGGGATCTGACTTGTGGAAGGCTCATGGGGGAGGTGGGCCCTGCTGCTGGTGGTTCTGAGTATGGCACGGACTAATTGGAGAAAGCAGCACGGCTCCTTTCGTGGTCTTCACCCCTCCTGCTGCTGCTGCTGCTAC")
+print(result)
+
+```
+
+```{r}
+#Write a function that simulates and generates a logistic population growth curve. Your function should include 2 extra parameters that randomize the length of the lag phase and the exponential phase [See population curve here] . Most living populations follow a logistic population growth. Therefore, your growth curve can be: Population Size vs Time, Cell density vs Time, OD vs Time, CFU vs Time, etc. Using your function, generate a dataframe with 100 different growth curves
+
+# Simple logistic growth function (time, 78, 0.4, 7, 6) -> Population
+logistic_growth <- function(time, K, r, P0, lag) {
+  if (time < lag) {
+    return(P0) # Population stays constant during lag phase
+  }
+  else{
+    # Logistic growth equation
+    return(K / (1 + ((K - P0) / P0) * exp(-r * (time - lag))))
+  }
+}
+
+# Function to generate multiple growth curves
+generate_growth_curves <- function(n_curves = 100, time_points = 50) {
+  all_curves <- data.frame() # Initialize an empty dataframe
+  
+  for (i in 1:n_curves) {
+    # Randomize parameters for each curve
+    K <- runif(1, 50, 100)  # Carrying capacity - 78
+    r <- runif(1, 0.1, 0.5) # Growth rate - 0.4
+    P0 <- runif(1, 1, 10)   # Initial population - 7
+    lag <- sample(1:10, 1)  # Lag phase duration - 6
+    
+    # Generate time points and population sizes 0 - 50
+    time <- seq(0, time_points, by = 1)
+    population <- sapply(time, function(t) logistic_growth(t, K, r, P0, lag))
+    
+    # Combine into a dataframe
+    curve_df <- data.frame(Curve_ID = i, Time = time, Population = population)
+    
+    # Append to the main dataframe
+    all_curves <- rbind(all_curves, curve_df)
+  }
+  
+  return(all_curves)
+}
+
+# Generate 100 growth curves
+growth_curves <- generate_growth_curves()
+
+# View the first few rows
+head(growth_curves)
+
+
+```
