@@ -40,7 +40,7 @@ print(result)
 ```
 
 ```{r}
-#Write a function that simulates and generates a logistic population growth curve. Your function should include 2 extra parameters that randomize the length of the lag phase and the exponential phase [See population curve here] . Most living populations follow a logistic population growth. Therefore, your growth curve can be: Population Size vs Time, Cell density vs Time, OD vs Time, CFU vs Time, etc. Using your function, generate a dataframe with 100 different growth curves
+# 2. Write a function that simulates and generates a logistic population growth curve. Your function should include 2 extra parameters that randomize the length of the lag phase and the exponential phase [See population curve here] . Most living populations follow a logistic population growth. Therefore, your growth curve can be: Population Size vs Time, Cell density vs Time, OD vs Time, CFU vs Time, etc. Using your function, generate a dataframe with 100 different growth curves
 
 # Simple logistic growth function (time, 78, 0.4, 7, 6) -> Population
 logistic_growth <- function(time, K, r, P0, lag) {
@@ -86,3 +86,59 @@ head(growth_curves)
 
 
 ```
+
+```{r}
+# 3. Write a function for determining the time to reach 80% of the maximum growth; usually the carrying capacity
+# Logistic growth function
+logistic_growth <- function(t, K, r, P0) {
+  return(K / (1 + (K - P0) / P0 * exp(-r * t)))
+}
+
+# Function to find time to reach 80% of carrying capacity
+time_to_80_percent <- function(K, r, P0) {
+  target_population <- 0.8 * K  # 80% of carrying capacity
+  
+  # Loop through time steps to find the time
+  for (t in 0:100) {
+    population <- logistic_growth(t, K, r, P0)
+    if (population >= target_population) {
+      return(t)
+    }
+  }
+  return(NA)  # If not reached within 100 time steps
+}
+
+# Example usage
+K <- 100     # Carrying capacity
+r <- 0.3     # Growth rate
+P0 <- 5      # Initial population
+
+time_80 <- time_to_80_percent(K, r, P0)
+cat("Time to reach 80% of carrying capacity:", time_80, "\n")
+
+```
+
+```{r}
+# 4. Finally, write a function for calculating the hamming distance between your Slack username and twitter/X handle (synthesize if you don’t have one). Feel free to pad it with extra words if they are not of the same length.
+# Function to calculate Hamming distance
+hamming_distance <- function(str1, str2) {
+  # Pad the shorter string with spaces if they are not the same length
+  max_length <- max(nchar(str1), nchar(str2))
+  str1 <- paste0(str1, rep(" ", max_length - nchar(str1)))
+  str2 <- paste0(str2, rep(" ", max_length - nchar(str2)))
+  
+  # Count the number of differing characters
+  diff_count <- sum(strsplit(str1, NULL)[[1]] != strsplit(str2, NULL)[[1]])
+  
+  return(diff_count)
+}
+
+# Example usage
+slack_username <- "aspiara2468102"
+x_username <- "aspiararoosmin"
+distance <- hamming_distance(slack_username, x_username)
+print(distance)
+
+```
+
+
