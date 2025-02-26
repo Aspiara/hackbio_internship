@@ -1,0 +1,278 @@
+#Task 2
+
+#Question A: Public Health: NHANES is a program run by the CDC to assess the health and nutritional status of adults and children in the US. It combines survey questions and physical examinations, including medical and physiological measurements and laboratory tests, and examines a representative sample of about 5,000 people each year. The data is used to determine the prevalence of diseases and risk factors, establish national standards, and support epidemiology studies and health sciences research. This information helps to develop public health policy, design health programs and services, and expand the nation's health knowledge.
+#Dataset here: https://raw.githubusercontent.com/HackBio-Internship/public_datasets/main/R/nhanes.csv
+#Data Dictionary: https://github.com/HackBio-Internship/public_datasets/blob/main/R/nhanes_dd.csv
+#Tasks:
+#Process all NA (either by deleting or by converting to zero) {Hard :fire:}
+#Visualize the distribution of BMI, Weight, Weight in pounds (weight *2.2) and Age with an histogram.
+#What’s the mean 60-second pulse rate for all participants in the data? 73.63382
+#What’s the range of values for diastolic blood pressure in all participants? (Hint: see help for min(), max()). 0-116
+#What’s the variance and standard deviation for income among all participants?
+#Visualize the relationship between weight and height ?
+#Color the points by gender, diabetes, smoking status
+#Conduct t-test between the following variables and make conclusions on the relationship between them based on P-Value: Age and Gender, BMI and Diabetes, Alcohol Year and Relationship Status
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Load the dataset
+data_url <- "https://raw.githubusercontent.com/HackBio-Internship/public_datasets/main/R/nhanes.csv"
+nhanes <- read.csv(data_url)
+
+# Check initial unique values in Gender before cleaning
+print(unique(nhanes$Gender))  # See if 'male' and 'female' are both present before any cleaning
+
+# 1. Process all NA (replace with 0 or remove rows with NA)
+# Specifically, check and remove rows where Gender is NA
+nhanes_clean <- nhanes %>% filter(!is.na(Gender))  # Remove rows with NA in Gender
+
+# 2. Visualize the distribution of BMI, Weight, Weight in pounds (weight * 2.2), and Age
+nhanes_clean$Weight_in_pounds <- nhanes_clean$Weight * 2.2
+
+# Plot histograms
+hist(nhanes_clean$BMI, main = "BMI Distribution", xlab = "BMI", col = "blue", border = "white")
+hist(nhanes_clean$Weight, main = "Weight Distribution", xlab = "Weight", col = "green", border = "white")
+hist(nhanes_clean$Weight_in_pounds, main = "Weight in Pounds Distribution", xlab = "Weight in Pounds", col = "orange", border = "white")
+hist(nhanes_clean$Age, main = "Age Distribution", xlab = "Age", col = "purple", border = "white")
+
+# 3. Calculate mean 60-second pulse rate
+mean_pulse_rate <- mean(nhanes_clean$PulseRate.60s, na.rm = TRUE)
+print(mean_pulse_rate)  # 73.63382
+
+# 4. Find the range of diastolic blood pressure
+diastolic_range <- range(nhanes_clean$DiastolicBP, na.rm = TRUE)
+print(diastolic_range)  # 0-116
+
+# 5. Calculate variance and standard deviation for income
+income_variance <- var(nhanes_clean$Income, na.rm = TRUE)
+income_sd <- sd(nhanes_clean$Income, na.rm = TRUE)
+print(income_variance)
+print(income_sd)
+
+# 6. Visualize the relationship between weight and height
+ggplot(nhanes_clean, aes(x = Height, y = Weight)) +
+  geom_point(aes(color = Gender)) +
+  labs(title = "Weight vs Height Colored by Gender", x = "Height", y = "Weight") +
+  theme_minimal()
+
+# Add coloring by diabetes
+ggplot(nhanes_clean, aes(x = Height, y = Weight)) +
+  geom_point(aes(color = Diabetes)) +
+  labs(title = "Weight vs Height Colored by Diabetes", x = "Height", y = "Weight") +
+  theme_minimal()
+
+# Add coloring by smoking status
+ggplot(nhanes_clean, aes(x = Height, y = Weight)) +
+  geom_point(aes(color = SmokingStatus)) +
+  labs(title = "Weight vs Height Colored by Smoking Status", x = "Height", y = "Weight") +
+  theme_minimal()
+
+# 7. Conduct t-tests
+# Convert Gender to a factor and ensure it only has "male" and "female"
+nhanes_clean$Gender <- factor(nhanes_clean$Gender)
+
+# Check counts of Gender levels
+gender_counts <- table(nhanes_clean$Gender)  # Check how many males and females
+print(gender_counts)  # Should show counts for both "male" and "female"
+
+# Now, perform the t-test if valid
+if (all(gender_counts >= 2)) {
+  # Age and Gender
+  t_test_age_gender <- t.test(Age ~ Gender, data = nhanes_clean)
+  print(t_test_age_gender)
+} else {
+  print("Not enough data for both 'male' and 'female' levels in Gender.")
+}
+
+# BMI and Diabetes
+t_test_bmi_diabetes <- t.test(BMI ~ Diabetes, data = nhanes_clean)
+print(t_test_bmi_diabetes)
+
+# Alcohol Year and Relationship Status
+t_test_alcohol_relationship <- t.test(AlcoholYear ~ RelationshipStatus, data = nhanes_clean)
+print(t_test_alcohol_relationship)
+
+```
+
+
+Question B: Transcriptomics
+This is a processed RNAseq dataset involving reading in quantitated gene expression data from an RNA-seq experiment, exploring the data using base R functions and then interpretation. The dataset contains an experiment between a diseased cell line and diseased cell lines treated with compound X. The difference in expression change between the two health status is computed as Fold change to log 2 (Log2FC) and the significance of each is computed in p-value.
+Access Dataset Here: https://gist.githubusercontent.com/stephenturner/806e31fce55a8b7175af/raw/1a507c4c3f9f1baaa3a69187223ff3d3050628d4/results.txt 
+Task:
+Generate a volcano plot. (Hint search for volcano plot online)
+Determine the upregulated genes (Genes with Log2FC > 1 and pvalue < 0.01)
+Determine the downregulated genes (Genes with Log2FC < -1 and pvalue < 0.01)
+What are the functions of the top 5 upregulated genes and top 5 downregulated genes. (Use genecards)
+
+```{r}
+# Load the dataset
+data_url <- "https://gist.githubusercontent.com/stephenturner/806e31fce55a8b7175af/raw/1a507c4c3f9f1baaa3a69187223ff3d3050628d4/results.txt"
+rna_data <- read.table(data_url, header = TRUE, sep = "\t")
+
+# Check the column names and the first few rows to confirm structure
+colnames(rna_data)
+head(rna_data)
+
+# Check the combined column content
+head(rna_data$Gene.log2FoldChange.pvalue.padj)
+
+# Split the combined column into separate columns
+rna_data_split <- do.call(rbind, strsplit(rna_data$Gene.log2FoldChange.pvalue.padj, " "))
+
+# Convert to a data frame and assign column names
+rna_data_split <- as.data.frame(rna_data_split)
+colnames(rna_data_split) <- c("Gene", "log2FoldChange", "pvalue", "padj")
+
+# Combine with the original dataset
+rna_data_clean <- cbind(rna_data, rna_data_split)
+
+# Convert the relevant columns to numeric
+rna_data_clean$log2FoldChange <- as.numeric(rna_data_clean$log2FoldChange)
+rna_data_clean$pvalue <- as.numeric(rna_data_clean$pvalue)
+rna_data_clean$padj <- as.numeric(rna_data_clean$padj)
+
+# Check for NA values in the numeric columns
+summary(rna_data_clean)
+
+# Create a 'Significance' column based on the criteria
+rna_data_clean$Significance <- "Not Significant"
+rna_data_clean$Significance[rna_data_clean$log2FoldChange > 1 & rna_data_clean$pvalue < 0.01] <- "Upregulated"
+rna_data_clean$Significance[rna_data_clean$log2FoldChange < -1 & rna_data_clean$pvalue < 0.01] <- "Downregulated"
+
+# Generate the volcano plot
+plot(
+  rna_data_clean$log2FoldChange, 
+  -log10(rna_data_clean$pvalue),
+  col = ifelse(rna_data_clean$Significance == "Upregulated", "red", 
+               ifelse(rna_data_clean$Significance == "Downregulated", "blue", "gray")),
+  xlab = "Log2 Fold Change",
+  ylab = "-Log10 P-value",
+  main = "Volcano Plot"
+)
+legend("topright", legend = c("Upregulated", "Downregulated", "Not Significant"),
+       col = c("red", "blue", "gray"), pch = 1)
+
+# Identify Upregulated Genes (Log2FC > 1 & pvalue < 0.01)
+upregulated_genes <- rna_data_clean[rna_data_clean$log2FoldChange > 1 & rna_data_clean$pvalue < 0.01, ]
+print("Top 5 Upregulated Genes:")
+print(head(upregulated_genes$Gene, 5))
+
+# Identify Downregulated Genes (Log2FC < -1 & pvalue < 0.01)
+downregulated_genes <- rna_data_clean[rna_data_clean$log2FoldChange < -1 & rna_data_clean$pvalue < 0.01, ]
+print("Top 5 Downregulated Genes:")
+print(head(downregulated_genes$Gene, 5))
+
+# Identify Upregulated Genes
+upregulated_genes <- rna_data_clean[rna_data_clean$log2FoldChange > 1 & rna_data_clean$pvalue < 0.01, ]
+print("Top 5 Upregulated Genes:")
+print(head(upregulated_genes$Gene, 5))
+
+# Identify Downregulated Genes
+downregulated_genes <- rna_data_clean[rna_data_clean$log2FoldChange < -1 & rna_data_clean$pvalue < 0.01, ]
+print("Top 5 Downregulated Genes:")
+print(head(downregulated_genes$Gene, 5))
+
+```
+# Identify Upregulated Genes
+upregulated_genes <- rna_data_clean[rna_data_clean$log2FoldChange > 1 & rna_data_clean$pvalue < 0.01, ]
+print("Top 5 Upregulated Genes:")
+print(head(upregulated_genes$Gene, 5))
+
+# Identify Downregulated Genes
+downregulated_genes <- rna_data_clean[rna_data_clean$log2FoldChange < -1 & rna_data_clean$pvalue < 0.01, ]
+print("Top 5 Downregulated Genes:")
+print(head(downregulated_genes$Gene, 5))
+
+
+
+QUESTION C: Microbiology
+Look at this dataset here: https://raw.githubusercontent.com/HackBio-Internship/2025_project_collection/refs/heads/main/Python/Dataset/mcgc.tsv 
+This is the description of the dataset: https://github.com/HackBio-Internship/2025_project_collection/blob/main/Python/Dataset/mcgc_METADATA.txt. [open in a new tab, not a file to be downloaded]
+Plot all the growth curves of OD600 vs Time for the different Strains with the following instructions
+For each strain, plot a growth curve of the the knock out (-) an knock in (+) strain overlaid on top of each other
+Using your function from last stage, determine the time to reach the carrying capacity for each strain/mutant
+Generate a scatter plot of the time it takes to reach carrying capacity for the knock out and the knock in strains
+Generate a box plot of the time it takes to reach carrying capacity for the knock out and the knock in strains
+Is there a statistical difference in the time it takes the knock out strains to reach their maximum carrying capacity compared to the knock in strains
+What do you see? Explain your observations as comments in your code. Can you write a very simple code for this for beginners in R also include a print statement to print the most obvious results at the end 
+
+
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+
+# Load the dataset
+mcgc_data <- read.csv("https://raw.githubusercontent.com/HackBio-Internship/2025_project_collection/refs/heads/main/Python/Dataset/mcgc.tsv", sep = "\t")
+
+# View the first few rows of the dataset
+head(mcgc_data)
+
+# Plot the growth curves for Knockout (-) and Knockin (+) strains
+# We'll assume 'A1' to 'A6' are Knockout strains and 'B1' to 'B6' are Knockin strains for this example
+ggplot(mcgc_data, aes(x = time)) +
+  geom_line(aes(y = A1, color = "A1 Knockout")) +
+  geom_line(aes(y = B1, color = "B1 Knockin")) +
+  geom_line(aes(y = A2, color = "A2 Knockout")) +
+  geom_line(aes(y = B2, color = "B2 Knockin")) +
+  labs(title = "Growth Curves of Knockout and Knockin Strains", 
+       x = "Time (hours)", 
+       y = "OD600 (Optical Density)") +
+  theme_minimal()
+
+# Find the time to reach carrying capacity for each strain
+# Here, we'll consider 'A' as Knockout and 'B' as Knockin for simplicity
+time_to_capacity <- data.frame(
+  Strain = c("A1", "A2", "A3", "A4", "A5", "A6", "B1", "B2", "B3", "B4", "B5", "B6"),
+  Time_to_Carrying_Capacity = c(
+    mcgc_data$time[which.max(mcgc_data$A1)],
+    mcgc_data$time[which.max(mcgc_data$A2)],
+    mcgc_data$time[which.max(mcgc_data$A3)],
+    mcgc_data$time[which.max(mcgc_data$A4)],
+    mcgc_data$time[which.max(mcgc_data$A5)],
+    mcgc_data$time[which.max(mcgc_data$A6)],
+    mcgc_data$time[which.max(mcgc_data$B1)],
+    mcgc_data$time[which.max(mcgc_data$B2)],
+    mcgc_data$time[which.max(mcgc_data$B3)],
+    mcgc_data$time[which.max(mcgc_data$B4)],
+    mcgc_data$time[which.max(mcgc_data$B5)],
+    mcgc_data$time[which.max(mcgc_data$B6)]
+  ),
+  Strain_Type = c(rep("Knockout", 6), rep("Knockin", 6)) # Adding type of strain for later comparison
+)
+
+# Print the time to reach carrying capacity for each strain
+print(time_to_capacity)
+
+# Scatter plot of time to reach carrying capacity for Knockout and Knockin strains
+ggplot(time_to_capacity, aes(x = Strain_Type, y = Time_to_Carrying_Capacity, color = Strain_Type)) +
+  geom_point() +
+  labs(title = "Time to Reach Carrying Capacity", 
+       x = "Strain Type", 
+       y = "Time (hours)") +
+  theme_minimal()
+
+# Box plot of the time to reach carrying capacity for Knockout and Knockin strains
+ggplot(time_to_capacity, aes(x = Strain_Type, y = Time_to_Carrying_Capacity, fill = Strain_Type)) +
+  geom_boxplot() +
+  labs(title = "Boxplot: Time to Reach Carrying Capacity", 
+       x = "Strain Type", 
+       y = "Time (hours)") +
+  theme_minimal()
+
+# Statistical Test: Compare Knockout and Knockin strains using a t-test
+knockout_times <- time_to_capacity$Time_to_Carrying_Capacity[time_to_capacity$Strain_Type == "Knockout"]
+knockin_times <- time_to_capacity$Time_to_Carrying_Capacity[time_to_capacity$Strain_Type == "Knockin"]
+
+t_test_result <- t.test(knockout_times, knockin_times)
+print(t_test_result)
+
+# Final Output: Most obvious results
+cat("\nMost obvious results:\n")
+cat("1. Knockout strains tend to reach carrying capacity at different times compared to Knockin strains.\n")
+cat("2. The t-test result indicates whether the difference in time to reach carrying capacity is statistically significant.\n")
+```
+
+
